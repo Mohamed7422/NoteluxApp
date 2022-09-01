@@ -11,18 +11,24 @@ import database.model.Note;
 
 @Database(entities = {Note.class},version = 1,exportSchema = false)
 public abstract class MyDataBase extends RoomDatabase {
-    //Skeleton design pattern
-    private static MyDataBase dataBase;
+    //singleton design pattern
+    //this way is not thread saving
+    private static volatile MyDataBase dataBase = null;
     private final static String DATABASE_NAME="notesDatabase";
     public abstract NotesDao notesDao();
 
-    public static MyDataBase getInstance(Context context ){
-        if (dataBase==null){
+    public static  MyDataBase getInstance(Context context ){
+        if (dataBase==null) {
             //create
-            dataBase = Room.databaseBuilder(context,MyDataBase.class,DATABASE_NAME)
-                    .fallbackToDestructiveMigration()
-                    .allowMainThreadQueries()
-                    .build();
+            //make synchronize to double checked locking
+            synchronized (MyDataBase.class) {
+
+                if (dataBase==null)
+                dataBase = Room.databaseBuilder(context, MyDataBase.class, DATABASE_NAME)
+                        .fallbackToDestructiveMigration()
+                        .allowMainThreadQueries()
+                        .build();
+            }
         }
         return dataBase;
     }
